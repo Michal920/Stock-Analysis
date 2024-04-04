@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result</title>
+</head>
+<body>
+    <h1>Result</h1>
+    <p>Open price on day 1: ${{ "{:.2f}".format(open_price) }}</p>
+    <p>Close price on last day: ${{ "{:.2f}".format(close_price) }}</p>
+    <p>Percentage change: {{ "{:.2f}".format(percentage_change) }}%</p>
+    <p>Profit/Loss: ${{ "{:.2f}".format(profit_loss) }}</p>
+    <iframe src="{{ plot_url }}" width="800" height="600"></iframe>
+</body>
+</html>
