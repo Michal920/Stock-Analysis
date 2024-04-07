@@ -5,6 +5,9 @@ import yfinance as yf
 import plotly.graph_objs as go
 import os
 import sqlite3
+import pandas as pd
+import matplotlib.pyplot as plt
+
 
 app = Flask(__name__)
 
@@ -24,8 +27,44 @@ def get_tickers_and_names_from_db():
 
 @app.route('/')
 def index():
+      # Pobierz dane o wybranych spółkach z ostatniego tygodnia
+    symbols = ['MSFT', 'NVDA', 'GOOGL', 'META', 'AMZN', 'AAPL']
+    stocks_data = {}
+    for symbol in symbols:
+        stock = yf.Ticker(symbol)
+        data = stock.history(period="1mo")
+        stocks_data[symbol] = data
+
+    # Wygeneruj interaktywne wykresy za pomocą Plotly
+    plot_urls = {}
+    for symbol, data in stocks_data.items():
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(x=data.index, y=data['Close'], mode='lines', name='Close Price'))
+        fig.update_layout(title=f'{symbol} Stock Price (Last Week)', xaxis_title='Date', yaxis_title='Price (USD)')
+        fig.update_layout(font=dict(size=10))  # Zmniejsz rozmiar czcionki
+        fig.update_layout(height=250, width=300)  # Zmniejsz rozmiar wykresu
+        plot_urls[symbol] = fig.to_html(full_html=False)
+
+    # Pobierz dane o indeksie S&P 500
+    sp500 = yf.Ticker("^GSPC")
+    sp500_data = sp500.history(period="1y")
+    fig_sp500 = go.Figure()
+    fig_sp500.add_trace(go.Scatter(x=sp500_data.index, y=sp500_data['Close'], mode='lines', name='Close Price'))
+    fig_sp500.update_layout(title='S&P 500 Index', xaxis_title='Date', yaxis_title='Price (USD)')
+    fig_sp500.update_layout(font=dict(size=12))  # Zmniejsz rozmiar czcionki
+    fig_sp500.update_layout(height=400, width=600)  # Zmniejsz rozmiar wykresu
+    plot_url_sp500 = fig_sp500.to_html(full_html=False)
+
+    # Wyświetl interaktywne wykresy spółek na stronie głównej
+    return render_template('index.html', plot_url_sp500=plot_url_sp500, plot_urls=plot_urls)
+
+def home():
+    return render_template('index.html')
+
+@app.route('/stock_analysis')
+def stock_analysis():
     tickers_and_names = get_tickers_and_names_from_db()
-    return render_template('index.html', tickers_and_names=tickers_and_names)
+    return render_template('stock_analysis.html', tickers_and_names=tickers_and_names)
 
 @app.route('/result', methods=['POST'])
 def result():

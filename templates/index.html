@@ -4,23 +4,33 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Stock Analysis</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Dodaj linki do stylów Plotly i biblioteki JavaScriptowej Plotly -->
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
 </head>
 <body>
-    <h1>Stock Analysis</h1>
-    <form action="/result" method="post">
-        <label for="start">Start Date (YYYY-MM-DD):</label><br>
-        <input type="text" id="start" name="start"><br>
-        <label for="end">End Date (YYYY-MM-DD):</label><br>
-        <input type="text" id="end" name="end"><br>
-        <label for="ticker">Choose a Company:</label><br>
-        <select id="ticker" name="ticker">
-        {% for ticker, name in tickers_and_names %}
-        <option value="{{ ticker }}">{{ name }}</option>
-        {% endfor %}
-        </select><br>
-        <label for="investment">Investment Amount (USD):</label><br>
-        <input type="text" id="investment" name="investment"><br><br>
-        <input type="submit" value="Submit">
-    </form>
+    {% include 'navbar.html' %}
+
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-6">
+                <h2>S&P 500 Index</h2>
+                <!-- Wyświetl interaktywny wykres Plotly -->
+                {{ plot_url_sp500 | safe }}
+            </div>
+            <div class="col-lg-6">
+                <div class="row">
+                    {% for symbol, plot_url in plot_urls.items() %}
+                    <div class="col-lg-4 mb-3">
+                        <h2>{{ symbol }} Stock</h2>
+                        <!-- Wyświetl interaktywny wykres Plotly -->
+                        {{ plot_url | safe }}
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

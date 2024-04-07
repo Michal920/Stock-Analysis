@@ -4,8 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Result</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <!-- jQuery -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </head>
 <body>
+    {% include 'navbar.html' %}
     <h1>Result</h1>
     <p>Open price on day 1: ${{ "{:.2f}".format(open_price) }}</p>
     <p>Close price on last day: ${{ "{:.2f}".format(close_price) }}</p>
