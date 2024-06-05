@@ -23,48 +23,82 @@
 
         /* Zwiększenie rozmiaru czcionki dla nazwy */
         .navbar-brand {
-            font-size: 24px; /* Możesz dostosować rozmiar czcionki według potrzeb */
-            margin-left: 20px; /* Przesunięcie nazwy w prawo */
+            font-size: 30px; /* Możesz dostosować rozmiar czcionki według potrzeb */
+            flex-grow: 3; /* Rozszerzaj nawigację, aby wypełnić dostępną przestrzeń */
+            text-align: center; /* Wyśrodkuj tekst wewnątrz */
+        }
+
+        .navbar-brand .yellow {
+            color: yellow; /* Ustawienie koloru na żółty */
+        }
+
+        /* Zwiększenie rozmiaru czcionki dla przycisków nawigacyjnych */
+        .nav-link {
+            font-size: 18px; /* Możesz dostosować rozmiar czcionki według potrzeb */
         }
 
         /* Zmiana koloru czcionki po najechaniu myszką */
         .navbar-nav .nav-link:hover {
             color: #aaaaaa !important; /* Szary kolor czcionki */
         }
-        .nav-item:not(:last-child) {
-            margin-right: 20px; /* Dostosuj wielkość marginesu według potrzeb */
+
+        /* Dodanie marginesu po lewej stronie przycisków nawigacyjnych */
+        .navbar-nav .nav-item:not(:last-child) {
+            margin-right: 20px;
+            
         }
+
+        /* Wykorzystanie flexbox do centrowania elementów */
+        .navbar-nav {
+            display: flex;
+            justify-content: center; /* Wyśrodkuj elementy na osi poziomej */
+            align-items: center; /* Wyśrodkuj elementy na osi pionowej */
+            flex-grow: 0; /* Rozszerzaj nawigację, aby wypełnić dostępną przestrzeń */
+        }
+        .navbar {
+            position: fixed; /* Ustawienie paska nawigacyjnego na stałej pozycji */
+            top: 0; /* Ustawienie odległości od góry strony na 0 */
+            width: 100%; /* Ustawienie szerokości na 100%, aby pasek nawigacyjny wypełnił całą szerokość strony */
+            z-index: 1000; /* Ustawienie wysokiego indeksu warstwy, aby pasek nawigacyjny był zawsze na wierzchu */
+        }
+
     </style>
 </head>
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark">
-        <a class="navbar-brand" href="#">StoXLab</a>
+        <a class="navbar-brand" href="#">Sto<span class="yellow">XL</span>ab</a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
-            <ul class="navbar-nav ml-auto">
+            <ul class="navbar-nav">
                 <li class="nav-item">
-                    <a class="nav-link" href="/home">Home</a>
+                    <a class="nav-link" href="/home">HOME</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Stock Info</a>
+                    <a class="nav-link" href="stock_info">STOCK INFO</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="/stock_analysis">Investment Simulator</a>
+                    <a class="nav-link" href="/portfolio_simulator">PORTFOLIO SIMULATOR</a>
                 </li>
                 <li class="nav-item">
-                    <a class="nav-link" href="#">Forecast Simulator</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Markowitz Simulator</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#">Databases</a>
+                    <a class="nav-link" href="/data">DATA</a>
                 </li>
             </ul>
         </div>
     </nav>
+    <script>
+        // Funkcja do przekierowania użytkownika na stronę główną po kliknięciu na logo
+        function redirectToHome() {
+            window.location.href = '/home';
+        }
+    
+        // Dodanie obsługi zdarzenia kliknięcia na logo
+        document.addEventListener('DOMContentLoaded', function() {
+            var logo = document.querySelector('.navbar-brand'); // Znajdź element logo
+            logo.addEventListener('click', redirectToHome);
+        });
+    </script>
 </body>
 </html>

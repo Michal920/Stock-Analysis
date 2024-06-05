@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.21/css/jquery.dataTables.css">
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script type="text/javascript" charset="utf8" src="https://cdn.datatables.net/1.10.21/js/jquery.dataTables.js"></script>
+</head>
+<body style="margin-top: 100px;">
+    {% include 'navbar.html' %}
+    <div class="container" style="text-align: center;">
+        <h1 style="font-size: 30px;">DATABASE</h1>
+        <table id="data-table" class="display" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Symbol</th>
+                    <th>Name</th>
+                    <th>GICS Sector</th>
+                    <th>Sub Industry</th>
+                    <th>Date</th>
+                    <th>Avg Return</th>
+                    <th>Volatility</th>
+                    <th>Sharpe Ratio</th>
+                </tr>
+            </thead>
+        </table>
+    </div>
+    <script>
+        $(document).ready(function() {
+            $('#data-table').DataTable({
+                "ajax": {
+                    "url": "/get_combined_data",
+                    "dataSrc": ""
+                },
+                "columns": [
+                    { "data": "symbol" },
+                    { "data": "name" },
+                    { "data": "gics_sector" },
+                    { "data": "sub_industry" },
+                    { "data": "date" },
+                    { "data": "avg_return" },
+                    { "data": "volatility" },
+                    { "data": "sharpe_ratio" }
+                ]
+            });
+        });
+    </script>
+</body>
+</html>

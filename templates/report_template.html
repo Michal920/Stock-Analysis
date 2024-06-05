@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Portfolio Report</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        .container { width: 100%; padding: 20px; }
+        .chart { margin: 20px 0;}
+        .chart img {width: 100%; height: auto;}
+        .charts-container {display: flex;flex-direction: column;}
+        table { width: 100%; border-collapse: collapse; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #f2f2f2; }
+        .avoid-page-break {page-break-inside: avoid;}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Portfolio Report</h1>
+        <h2>Selected Stocks</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Stock</th>
+                    <th>Quantity</th>
+                    <th>Initial Value</th>
+                    <th>Final Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for stock, quantity, initial_value, final_value in zip(selected_stocks, quantities, initial_values, final_values) %}
+                    <tr>
+                        <td>{{ stock }}</td>
+                        <td>{{ quantity }}</td>
+                        <td>{{ initial_value|round(2) }}</td>
+                        <td>{{ final_value|round(2) }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <p><strong>Start Date:</strong> {{ start_date }}</p>
+        <p><strong>End Date:</strong> {{ end_date }}</p>
+        <p><strong>Total Investment: $</strong> {{ total_investment|round(2) }}</p>
+        <h2>Portfolio Return: {{ portfolio_return }}</h2>
+        <div class="charts-container">
+        <div class="chart">
+            <h2>Performance Chart</h2>
+            <img src="data:image/png;base64,{{ performance_chart }}">
+        </div>
+        <div class="avoid-page-break">
+            <div class="chart">
+            <h2>Initial and Final Values with Percentage Change</h2>
+            <img src="data:image/png;base64,{{ bar_chart }}">
+            </div>
+        </div>
+        <div class="avoid-page-break">
+            <div class="chart">
+            <h2>Initial Portfolio Distribution</h2>
+            <img src="data:image/png;base64,{{ pie_chart_initial }}">
+            </div>
+        </div>
+        <div class="avoid-page-break">
+            <div class="chart">
+            <h2>Final Portfolio Distribution</h2>
+            <img src="data:image/png;base64,{{ pie_chart_final }}">
+        </div>
+        </div>
+        </div>
+    </div>
+</body>
+</html>
