@@ -469,32 +469,5 @@ def optimize_portfolio_endpoint():
         'tickers': tickers
     })
 
-@app.route('/get_selected_data', methods=['POST'])
-def get_selected_data():
-    data = request.json
-    selected_stocks = data['selected_stocks']
-    total_investment = data['total_investment']
-    start_date = data['start_date']
-
-    return jsonify({
-        'selected_stocks': selected_stocks,
-        'total_investment': total_investment,
-        'start_date': start_date
-    })
-
-@app.route('/get_returns', methods=['POST'])
-def get_returns():
-    data = request.json
-    stock_symbol = data['stock_symbol']
-    start_date = data['start_date']
-    end_date = data['end_date']
-
-    try:
-        stock_data = yf.download(stock_symbol, start=start_date, end=end_date)
-        returns = stock_data['Close'].pct_change().dropna().tolist()
-        return jsonify({'returns': returns})
-    except Exception as e:
-        return jsonify({'error': str(e)})
-    
 if __name__ == '__main__':
     app.run(debug=True)
