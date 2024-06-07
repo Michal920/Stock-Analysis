@@ -4,64 +4,46 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StoXLab</title>
-    <!-- Bootstrap CSS -->
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Dodaj linki do stylów Plotly i biblioteki JavaScriptowej Plotly -->
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
     <style>
-        /* Zmiana koloru tła paska nawigacyjnego */
         .navbar {
-            background-color: #000000; /* Czarny kolor tła */
+            background-color: #000000;
         }
-
-        /* Zmiana koloru czcionki */
         .navbar-brand,
         .navbar-nav .nav-link {
-            color: #ffffff !important; /* Biały kolor czcionki */
+            color: #ffffff !important;
         }
-
-        /* Zwiększenie rozmiaru czcionki dla nazwy */
         .navbar-brand {
-            font-size: 30px; /* Możesz dostosować rozmiar czcionki według potrzeb */
-            flex-grow: 3; /* Rozszerzaj nawigację, aby wypełnić dostępną przestrzeń */
-            text-align: center; /* Wyśrodkuj tekst wewnątrz */
+            font-size: 30px; 
+            flex-grow: 3;
+            text-align: center;
         }
-
         .navbar-brand .yellow {
-            color: yellow; /* Ustawienie koloru na żółty */
+            color: yellow; 
         }
-
-        /* Zwiększenie rozmiaru czcionki dla przycisków nawigacyjnych */
         .nav-link {
-            font-size: 18px; /* Możesz dostosować rozmiar czcionki według potrzeb */
+            font-size: 18px;
         }
-
-        /* Zmiana koloru czcionki po najechaniu myszką */
         .navbar-nav .nav-link:hover {
-            color: #aaaaaa !important; /* Szary kolor czcionki */
+            color: #aaaaaa !important;
         }
-
-        /* Dodanie marginesu po lewej stronie przycisków nawigacyjnych */
         .navbar-nav .nav-item:not(:last-child) {
             margin-right: 20px;
             
         }
-
-        /* Wykorzystanie flexbox do centrowania elementów */
         .navbar-nav {
             display: flex;
-            justify-content: center; /* Wyśrodkuj elementy na osi poziomej */
-            align-items: center; /* Wyśrodkuj elementy na osi pionowej */
-            flex-grow: 0; /* Rozszerzaj nawigację, aby wypełnić dostępną przestrzeń */
+            justify-content: center;
+            align-items: center;
+            flex-grow: 0;
         }
         .navbar {
-            position: fixed; /* Ustawienie paska nawigacyjnego na stałej pozycji */
-            top: 0; /* Ustawienie odległości od góry strony na 0 */
-            width: 100%; /* Ustawienie szerokości na 100%, aby pasek nawigacyjny wypełnił całą szerokość strony */
-            z-index: 1000; /* Ustawienie wysokiego indeksu warstwy, aby pasek nawigacyjny był zawsze na wierzchu */
+            position: fixed;
+            top: 0;
+            width: 100%;
+            z-index: 1000;
         }
-
     </style>
 </head>
 <body>
@@ -89,14 +71,11 @@
         </div>
     </nav>
     <script>
-        // Funkcja do przekierowania użytkownika na stronę główną po kliknięciu na logo
         function redirectToHome() {
             window.location.href = '/home';
         }
-    
-        // Dodanie obsługi zdarzenia kliknięcia na logo
         document.addEventListener('DOMContentLoaded', function() {
-            var logo = document.querySelector('.navbar-brand'); // Znajdź element logo
+            var logo = document.querySelector('.navbar-brand');
             logo.addEventListener('click', redirectToHome);
         });
     </script>

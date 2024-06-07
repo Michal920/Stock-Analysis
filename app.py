@@ -15,7 +15,6 @@ from jinja2 import Template
 import base64
 from io import BytesIO
 
-
 app = Flask(__name__)
 
 def get_tickers_and_names_from_db():
@@ -337,7 +336,6 @@ def get_max_units(budget, price):
     max_units = int(budget / price)
     return max_units
 
-
 def optimize_portfolio(tickers, budget, start_date, end_date, risk_aversion):
     data = get_stock_data(tickers, start_date, end_date)
     if data.empty:
@@ -429,10 +427,8 @@ def optimize_portfolio_endpoint():
     corr_matrix = allocation_result['corr_matrix']   
     tickers = allocation_result['tickers']  
 
-     # Pobierz dane o cenach akcji
     data2 = get_stock_data2(tickers, start_date2, end_date2)
     
-    # Oblicz wartość portfela w czasie na podstawie alokacji
     portfolio_values = []
     dates = data2.index
     for date in dates:
@@ -441,7 +437,6 @@ def optimize_portfolio_endpoint():
             daily_value += data2.loc[date, ticker] * units
         portfolio_values.append(daily_value)
 
-    # Oblicz wartość początkową i końcową portfela
     portfolio_value_initial = portfolio_values[0]
     portfolio_value_final = portfolio_values[-1]
 
@@ -452,7 +447,6 @@ def optimize_portfolio_endpoint():
 
     portfolio_return = f"{portfolio_return:.2f}%"    
 
-    # Tworzenie wykresu wartości portfela w czasie
     fig = go.Figure()
     fig.add_trace(go.Scatter(x=dates, y=portfolio_values, mode='lines', name='Portfolio Value'))
     fig.update_layout(title='Portfolio Performance After Optimization', xaxis_title='Date', yaxis_title='Portfolio Value (USD)')
@@ -502,6 +496,5 @@ def get_returns():
     except Exception as e:
         return jsonify({'error': str(e)})
     
-
 if __name__ == '__main__':
     app.run(debug=True)
