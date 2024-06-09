@@ -11,9 +11,12 @@
 </head>
 <body style="margin-top: 100px;">
     {% include 'navbar.html' %}
-    <div class="container" style="text-align: center;">
-        <h1 style="font-size: 30px;">DATABASE</h1>
-        <table id="data-table" class="display" style="width:100%">
+    <div class="container">
+        <div class="row">
+            <div class="col-lg-12" style="text-align: center;">
+                <h1 style="font-size: 30px;">DATABASE</h1>
+                <div class="table-responsive">
+                    <table id="data-table" class="display" style="width:100%">
             <thead>
                 <tr>
                     <th>Symbol</th>
@@ -31,6 +34,7 @@
     <script>
         $(document).ready(function() {
             $('#data-table').DataTable({
+                "responsive": true,
                 "ajax": {
                     "url": "/get_combined_data",
                     "dataSrc": ""

@@ -23,7 +23,6 @@
 </head>
 <body style="margin-top: 100px;">
     {% include 'navbar.html' %}
-
     <div class="container mt-4">
         <h1 style="font-size: 30px;" class="text-center mb-4">PORTFOLIO SIMULATOR</h1>
         <form id="portfolioForm">
@@ -32,7 +31,7 @@
                 <input type="text" class="form-control" id="search" placeholder="Enter ticker or company name" onkeyup="filterStocks()">
             </div>
             <div class="form-group">
-                <label for="tickerSelect">Double-click to select companies from S&P500:</label>
+                <label for="tickerSelect">Click to select companies from S&P500:</label>
                 <select multiple class="form-control" id="tickerSelect">
                     {% for ticker, name in tickers_and_names %}
                         <option value="{{ ticker }}" class="stock-item" data-ticker="{{ ticker }}" data-name="{{ name }}">{{ ticker }} - {{ name }}</option>
@@ -115,7 +114,6 @@
         <div id="correlationMatrix" class="mt-4"></div> 
     </div>
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
-    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/0.4.1/html2canvas.min.js"></script>
@@ -138,6 +136,25 @@
             }
         });
     });
+
+    $('#tickerSelect').change(function () {
+        var selectedStocks = $(this).val();
+        selectedStocks.forEach(function(stock) {
+            addStockToPortfolio(stock);
+        });
+    });
+
+    function addStockToPortfolio(stock) {
+        $('#selectedStocksTable tbody').append('<tr>' +
+            '<td>' + stock + '</td>' +
+            '<td><input type="number" class="form-control priceInput" value="0" readonly></td>' +
+            '<td><input type="number" class="form-control quantityInput" value="0" min="0"></td>' +
+            '<td><input type="number" class="form-control investmentInput" value="0" min="0" readonly></td>' +
+            '<td><input type="number" class="form-control shareInput" value="0" min="0" max="100" readonly></td>' +
+            '<td><button type="button" class="btn btn-danger btn-sm removeStockBtn">Delete</button></td>' + 
+            '</tr>');
+        $('#tickerSelect option[value="' + stock + '"]').prop('disabled', true);
+    }
 
     $('#tickerSelect option').dblclick(function () {
         var selectedStock = $(this).val();

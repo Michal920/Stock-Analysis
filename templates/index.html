@@ -8,7 +8,7 @@
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <style>
         .period-buttons {
-            margin-top: 10px;
+            margin-top: 30px;
             text-align: center;
             opacity: 0;
             animation: fadeInUp 1s ease forwards;
@@ -21,6 +21,11 @@
         h1, p, #chart-container {
             opacity: 0;
             animation: fadeInUp 1s ease forwards;
+        }
+        .text-animation {
+            opacity: 0;
+            animation: fadeInUp 1s ease forwards;
+            margin-top: 80px;
         }
         @keyframes fadeInUp {
             from {
@@ -40,16 +45,41 @@
 
         p {
             font-size: 1.2em;
+            color: black;
         }
         .centered-text {
             text-align: center;
             margin-bottom: 40px;
-            padding-top: 50px; 
+            padding-top: 80px; 
             padding-bottom: 10px;
         }
         #chart-container {
             width: 100%;
             text-align: center;
+        }
+        .disclaimer {
+            margin-top: 100px;
+            margin-bottom: 50px; 
+            font-size: 0.9em;
+            text-align: center;
+            font-weight: bold;
+            color: darkred;
+        }
+        .right-aligned-text {
+            text-align: left;
+        }
+        .center-text {
+            text-align: center;
+        }
+        .dark-red {
+            color: darkred;
+        }
+        .black-color {
+            color: black;
+        }
+        .not-bold {
+            font-weight: normal;
+            margin-top: 100px;
         }
     </style>
 </head>
@@ -75,6 +105,75 @@
                     <button class="btn btn-warning font-weight-bold" onclick="loadChart('5y')">5Y</button>
                     <button class="btn btn-warning font-weight-bold" onclick="loadChart('max')">All</button>
                 </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12 text-animation">
+                <p class="center-text">
+                    <strong>The application consists of 4 sections:</strong>
+                </p>
+                <p class="right-aligned-text">
+                    <strong>HOME</strong> – The main page with information;
+                </p>
+                <p class="right-aligned-text">
+                    <strong>STOCK INFO</strong> – Here, after selecting a company from the S&P 500, you will get details about the chosen company, financial data, balance sheet, and information about the history of dividend payouts, if any. All the above data is fetched from Yahoo Finance;
+                </p>
+                <p class="right-aligned-text">
+                    <strong>PORTFOLIO SIMULATOR</strong> – Here you can build your own investment portfolio and see the profit or loss that such a portfolio would generate over time. This is backtesting. 
+                    <br> How to do it:
+                </p>
+                <ol class="right-aligned-text">
+                    <li>Select a company/companies from the stock list by clicking on them to add them to the portfolio.</li>
+                    <li>Choose the [Start Date] when you would potentially create the selected portfolio.</li>
+                    <li>Click "Get Prices" to fetch stock prices for the selected date.</li>
+                    <li>Set the amount of selected stocks.</li>
+                    <li>Set the end date to check the results over time.</li>
+                    <li>Click "Show Performance" to generate a chart of the portfolio's value over time, along with the return percentage, change in stock allocation in the portfolio, and change in the value of individual stocks over time.</li>
+                </ol>
+                <p class="right-aligned-text">
+                    You can also generate a PDF report summarizing the portfolio's value over time and/or compare your investment with portfolio optimization by clicking "Optimize Portfolio" after setting the Risk Aversion. Before optimization, you need to provide the risk aversion, which is taken into account in the optimization algorithm. Generally, the value:
+                    <ul>
+                        <li>0.05 indicates a moderate level of risk, balancing risk and return;</li>
+                        <li>&lt;0.01 – aggressive investor, willing to take more risk for potentially higher returns;</li>
+                        <li>&gt;0.1 – conservative investor, preferring a lower volatility portfolio.</li>
+                    </ul>
+                </p>
+                <div class="center-text">
+                    <p>
+                        The algorithm used for optimization is based on the objective function of maximizing the Sharpe ratio. The algorithm also uses historical data such as the average returns of individual stocks and volatilities calculated as their standard deviations. The portfolio optimization function uses the "SLSQP" method to maximize the Sharpe ratio, calculated as the risk-adjusted return.
+                    </p>
+                    <p>
+                        <strong>Sharpe ratio = (R_p - R_f) / σ_p</strong>
+                        <br> where:
+                    </p>
+                    <ul style="list-style-type: none;">
+                        <li>R_p is the expected return of the portfolio or investment,</li>
+                        <li>R_f is the risk-free rate (e.g., return on government bonds),</li>
+                        <li>σ_p is the volatility (standard deviation) of the portfolio or investment returns.</li>
+                    </ul>
+                </div>
+                <p>
+                    At the end, the algorithm proposes the allocation of stocks in the portfolio within the user's specified budget (+ max 10%) and also returns data such as a chart of the proposed portfolio's value over time, return percentage, average returns, volatility, as well as covariance and correlation matrices which are also taken into account in the optimization algorithm.
+                </p>
+                <div class="center-text">
+                    <p>
+                        <strong>DATA</strong> – Here you will find a database of all companies from the S&P 500 containing data such as tickers, name, sector, industry, and indicators based on which portfolio optimization is applied – volatility, average returns, and Sharpe ratio.
+                    </p>
+                </div>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-12 disclaimer">
+                <p class="dark-red">
+                    <strong>Disclaimer:</strong>
+                </p>
+                <p class="dark-red">
+                    This application is provided for informational and educational purposes only and does not constitute financial advice. The information and analysis provided by this application are based on historical data and should not be interpreted as a guarantee of future performance. Investment decisions are made at the user's own risk. The creators of this application are not responsible for any financial losses that may result from using this application. It is strongly recommended to consult with a licensed financial advisor before making any investment decisions.
+                </p>
+                <p class="black-color not-bold">
+                    Created and designed by MW
+                    <br> All rights reserved.
+                </p>
             </div>
         </div>
     </div>

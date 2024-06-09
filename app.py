@@ -350,24 +350,11 @@ def optimize_portfolio(tickers, budget, start_date, end_date, risk_aversion):
     optimal_result = minimize(negative_sharpe_ratio, initial_weights, args=(data, risk_aversion), method='SLSQP', bounds=bounds, constraints=constraints)
     
     optimal_weights = optimal_result.x
-    print("Optymalne wagi:", optimal_weights)
 
     mean_returns = data.pct_change().mean() * 252
     volatilities = data.pct_change().std() * np.sqrt(252)
     cov_matrix = data.pct_change().cov() * 252
     corr_matrix = data.pct_change().corr()
-    
-    print("Średnie roczne zwroty:")
-    for ticker, mean_return in zip(tickers, mean_returns):
-        print(f"{ticker}: {mean_return:.2f}")
-    print("Roczna zmienność:")
-    for ticker, volatility in zip(tickers, volatilities):
-        print(f"{ticker}: {volatility:.2f}")
-    
-    print("Macierz kowariancji zwrotów rocznych:")
-    print(cov_matrix)
-    print("Macierz korelacji zwrotów rocznych:")
-    print(corr_matrix)
 
     allocation = []
     total_cost = 0
@@ -377,12 +364,9 @@ def optimize_portfolio(tickers, budget, start_date, end_date, risk_aversion):
         total_cost += allocated_units * price
         allocation.append((ticker, allocated_units))
 
-    print("Początkowy całkowity koszt:", total_cost)
-
     if total_cost > budget * 1.1:
         scaling_factor = (budget * 1.1) / total_cost
         allocation = [(ticker, units * scaling_factor) for ticker, units in allocation]
-        print("Skalowanie alokacji do 110% budżetu.")
 
     rounded_allocation = [(ticker, round(units)) for ticker, units in allocation]    
 
@@ -407,18 +391,14 @@ def optimize_portfolio_endpoint():
     end_date2 = data['end_date']
     risk_aversion = data['risk_aversion']
 
-    print("Start Date:", start_date)
-    print("End Date:", end_date)
-    print("Budget:", budget)
-
     allocation_result = optimize_portfolio(tickers, budget, start_date, end_date, risk_aversion)
 
     if not allocation_result:
-        print("Nie udało się pobrać danych dla żadnego z tickerów. Spróbuj zmienić tickery lub datę początkową.")
+        print("Error")
     else:
-        print("Optymalna alokacja akcji:")
+        print("Optimal allocation:")
         for ticker, units in allocation_result['allocation']:
-            print(f"{ticker}: {units:.2f} jednostek")
+            print(f"{ticker}: {units:.2f} units")
 
     allocation = allocation_result['allocation']
     mean_returns = allocation_result['mean_returns']
