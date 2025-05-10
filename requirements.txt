@@ -72,5 +72,5 @@ webencodings==0.5.1
 Werkzeug==3.0.1
 xlrd==2.0.1
 yahooquery==2.3.7
-yfinance==0.2.33
+yfinance==0.2.59
 waitress==3.0.0
