@@ -131,38 +131,123 @@ def generate_report():
     end_date = data['end_date']
     quantities = data['quantities']
 
+    print(f"generate_report: selected_stocks: {selected_stocks}, start_date: {start_date}, end_date: {end_date}, quantities: {quantities}")  # Debugowanie
+
     stock_prices = {}
     for stock_symbol in selected_stocks:
         try:
-            data = yf.download(stock_symbol, start=start_date, end=end_date)
-            stock_prices[stock_symbol] = data['Adj Close']
+            data = yf.download(stock_symbol, start=start_date, end=end_date, auto_adjust=True)
+            print(f"Dane dla {stock_symbol}: {data}")  # Debugowanie
+            if not data.empty:
+                if 'Adj Close' in data.columns:
+                    stock_prices[stock_symbol] = data['Adj Close']
+                elif 'Close' in data.columns:
+                    stock_prices[stock_symbol] = data['Close']
+                    print(f"Użyto kolumny 'Close' dla {stock_symbol}, brak 'Adj Close'")
+                else:
+                    stock_prices[stock_symbol] = None
+                    print(f"Brak kolumn 'Adj Close' lub 'Close' dla {stock_symbol}")
+                print(f"Type of stock_prices[{stock_symbol}]: {type(stock_prices[stock_symbol])}")  # Debugowanie typu
+            else:
+                stock_prices[stock_symbol] = None
+                print(f"Pusty DataFrame dla {stock_symbol}")
         except Exception as e:
             print(f"An error occurred while fetching data for {stock_symbol}: {str(e)}")
-            stock_prices[stock_symbol] = None      
+            stock_prices[stock_symbol] = None
 
     weighted_stock_data = {}
     for i, stock_symbol in enumerate(selected_stocks):
-        if stock_prices[stock_symbol] is not None:
-            weighted_stock_data[stock_symbol] = stock_prices[stock_symbol] * quantities[i]
+        if stock_prices[stock_symbol] is not None and not stock_prices[stock_symbol].empty:
+            try:
+                quantity = float(quantities[i])
+                # Upewnij się, że wynik jest Series
+                if isinstance(stock_prices[stock_symbol], pd.Series):
+                    weighted_stock_data[stock_symbol] = stock_prices[stock_symbol] * quantity
+                else:
+                    # Jeśli stock_prices[stock_symbol] jest DataFrame, weź pierwszą kolumnę jako Series
+                    weighted_stock_data[stock_symbol] = stock_prices[stock_symbol].iloc[:, 0] * quantity
+                print(f"weighted_stock_data[{stock_symbol}]: {weighted_stock_data[stock_symbol]}")  # Debugowanie
+                print(f"Type of weighted_stock_data[{stock_symbol}]: {type(weighted_stock_data[stock_symbol])}")  # Debugowanie typu
+            except (ValueError, TypeError) as e:
+                print(f"Błąd przy mnożeniu dla {stock_symbol}: {str(e)}")
+                weighted_stock_data[stock_symbol] = None
 
-    portfolio_value = pd.DataFrame(weighted_stock_data).sum(axis=1)
-    portfolio_value_initial = portfolio_value.iloc[0]
-    portfolio_return = (portfolio_value.iloc[-1] - portfolio_value_initial) / portfolio_value_initial * 100 if portfolio_value_initial != 0 else 0
+    # Sprawdzenie, czy mamy jakiekolwiek dane
+    if not weighted_stock_data:
+        return jsonify({'error': 'Brak prawidłowych danych dla wybranych akcji'})
+
+    # Debugowanie zawartości weighted_stock_data
+    print(f"weighted_stock_data keys: {list(weighted_stock_data.keys())}")
+    for key, value in weighted_stock_data.items():
+        print(f"weighted_stock_data[{key}] type: {type(value)}, is_series: {isinstance(value, pd.Series)}, is_dataframe: {isinstance(value, pd.DataFrame)}")
+
+    # Tworzenie DataFrame
+    try:
+        valid_data = []
+        valid_keys = []
+        for key, value in weighted_stock_data.items():
+            if value is not None:
+                if isinstance(value, pd.Series):
+                    valid_data.append(value)
+                    valid_keys.append(key)
+                elif isinstance(value, pd.DataFrame) and not value.empty:
+                    valid_data.append(value.iloc[:, 0])
+                    valid_keys.append(key)
+        print(f"valid_data: {len(valid_data)} elements")  # Debugowanie
+        if not valid_data:
+            return jsonify({'error': 'Brak prawidłowych danych do utworzenia DataFrame (pusta lista valid_data)'})
+        portfolio_value = pd.concat(valid_data, axis=1, keys=valid_keys)
+        portfolio_value.columns = valid_keys
+        print(f"portfolio_value: {portfolio_value}")  # Debugowanie
+    except Exception as e:
+        print(f"Błąd przy tworzeniu DataFrame: {str(e)}")
+        return jsonify({'error': f'Błąd podczas tworzenia DataFrame: {str(e)}'})
+
+    # Sprawdzenie, czy DataFrame jest pusty lub zawiera tylko NaN
+    if portfolio_value.empty or portfolio_value.isnull().all().all():
+        return jsonify({'error': 'Brak prawidłowych danych dla wybranych akcji'})
+
+    # Sum across columns to get the total portfolio value
+    portfolio_value_sum = portfolio_value.sum(axis=1)
+    print(f"portfolio_value_sum: {portfolio_value_sum}")  # Debugowanie
+
+    portfolio_value_initial = portfolio_value_sum.iloc[0]
+    print(f"portfolio_value_initial: {portfolio_value_initial}, type: {type(portfolio_value_initial)}")  # Debugowanie
+    if portfolio_value_initial != 0:
+        portfolio_return = (portfolio_value_sum.iloc[-1] - portfolio_value_initial) / portfolio_value_initial * 100
+    else:
+        portfolio_return = 0
     portfolio_return = f"{portfolio_return:.2f}%"
+    print(f"portfolio_return: {portfolio_return}")  # Debugowanie
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=portfolio_value.index, y=portfolio_value, mode='lines', name='Portfolio Value'))
+    fig.add_trace(go.Scatter(x=portfolio_value_sum.index, y=portfolio_value_sum, mode='lines', name='Portfolio Value'))
     fig.update_layout(title='Portfolio Performance', xaxis_title='Date', yaxis_title='Portfolio Value (USD)')
     performance_chart = fig_to_base64(fig)
 
     initial_values, final_values, percentage_changes = [], [], []
     for i, stock_symbol in enumerate(selected_stocks):
-        initial_value = stock_prices[stock_symbol].iloc[0] * quantities[i] if stock_prices[stock_symbol] is not None else 0
-        final_value = stock_prices[stock_symbol].iloc[-1] * quantities[i] if stock_prices[stock_symbol] is not None else 0
+        if stock_prices[stock_symbol] is not None and not stock_prices[stock_symbol].empty:
+            # Użyj skalarnej wartości z DataFrame lub Series
+            if isinstance(stock_prices[stock_symbol], pd.Series):
+                initial_value = stock_prices[stock_symbol].iloc[0] * float(quantities[i])
+                final_value = stock_prices[stock_symbol].iloc[-1] * float(quantities[i])
+            else:
+                initial_value = stock_prices[stock_symbol].iloc[0, 0] * float(quantities[i])
+                final_value = stock_prices[stock_symbol].iloc[-1, 0] * float(quantities[i])
+        else:
+            initial_value = 0
+            final_value = 0
         initial_values.append(initial_value)
         final_values.append(final_value)
-        percentage_change = ((final_value - initial_value) / initial_value) * 100 if initial_value != 0 else 0
-        percentage_changes.append(f"{percentage_change:.2f}%")
+        print(f"initial_value for {stock_symbol}: {initial_value}, type: {type(initial_value)}")  # Debugowanie
+        print(f"final_value for {stock_symbol}: {final_value}, type: {type(final_value)}")  # Debugowanie
+        if initial_value != 0:
+            percentage_change = ((final_value - initial_value) / initial_value) * 100
+        else:
+            percentage_change = 0
+        sign = '+' if percentage_change > 0 else ''
+        percentage_changes.append(f"{sign}{percentage_change:.2f}%")
 
     bar_fig = go.Figure()
     bar_fig.add_trace(go.Bar(x=selected_stocks, y=initial_values, name='Initial Value'))
@@ -180,20 +265,20 @@ def generate_report():
 
     total_investment = sum(initial_values)
 
-    rendered = render_template('report_template.html', 
-                                selected_stocks=selected_stocks, 
-                                quantities=quantities, 
-                                initial_values=initial_values, 
-                                final_values=final_values, 
-                                start_date=start_date, 
-                                end_date=end_date, 
-                                total_investment=total_investment, 
-                                portfolio_return=portfolio_return,
-                                performance_chart=performance_chart, 
-                                bar_chart=bar_chart, 
-                                pie_chart_initial=pie_chart_initial, 
-                                pie_chart_final=pie_chart_final,
-                                zip=zip)
+    rendered = render_template('report_template.html',
+                              selected_stocks=selected_stocks,
+                              quantities=quantities,
+                              initial_values=initial_values,
+                              final_values=final_values,
+                              start_date=start_date,
+                              end_date=end_date,
+                              total_investment=total_investment,
+                              portfolio_return=portfolio_return,
+                              performance_chart=performance_chart,
+                              bar_chart=bar_chart,
+                              pie_chart_initial=pie_chart_initial,
+                              pie_chart_final=pie_chart_final,
+                              zip=zip)
 
     pdf = pdfkit.from_string(rendered, False)
     response = make_response(pdf)
@@ -211,46 +296,140 @@ def get_performance_data():
     share_values = data['share_values']
     quantities = data['quantities']
 
+    print(f"start_date: {start_date}, end_date: {end_date}, selected_stocks: {selected_stocks}, quantities: {quantities}")  # Debugowanie
+    print("Używam wersji z pd.concat")  # Potwierdzenie wersji kodu
+
     if len(selected_stocks) != len(share_values) or len(selected_stocks) != len(quantities):
-        return jsonify({'error': 'Number of selected stocks does not match the number of share values or quantities'})
+        return jsonify({'error': 'Liczba wybranych akcji nie zgadza się z liczbą udziałów lub ilości'})
+
+    # Walidacja dat
+    try:
+        start_date_dt = dt.datetime.strptime(start_date, "%Y-%m-%d")
+        end_date_dt = dt.datetime.strptime(end_date, "%Y-%m-%d")
+        if start_date_dt >= end_date_dt:
+            return jsonify({'error': 'Data początkowa musi być wcześniejsza niż data końcowa'})
+        # Ogranicz end_date do bieżącej daty
+        current_date = dt.datetime.now()
+        if end_date_dt > current_date:
+            end_date_dt = current_date
+            end_date = current_date.strftime("%Y-%m-%d")
+            print(f"end_date ograniczono do bieżącej daty: {end_date}")
+    except ValueError:
+        return jsonify({'error': 'Nieprawidłowy format daty'})
 
     stock_prices = {}
     for i, stock_symbol in enumerate(selected_stocks):
         try:
-            data = yf.download(stock_symbol, start=start_date, end=end_date)
-            stock_prices[stock_symbol] = data['Adj Close']
+            stock_data = yf.download(stock_symbol, start=start_date, end=end_date, auto_adjust=True)
+            print(f"Dane dla {stock_symbol}: {stock_data}")  # Debugowanie
+            if not stock_data.empty:
+                if 'Adj Close' in stock_data.columns:
+                    stock_prices[stock_symbol] = stock_data['Adj Close']
+                elif 'Close' in stock_data.columns:
+                    stock_prices[stock_symbol] = stock_data['Close']
+                    print(f"Użyto kolumny 'Close' dla {stock_symbol}, brak 'Adj Close'")
+                else:
+                    stock_prices[stock_symbol] = None
+                    print(f"Brak kolumn 'Adj Close' lub 'Close' dla {stock_symbol}")
+                print(f"Type of stock_prices[{stock_symbol}]: {type(stock_prices[stock_symbol])}")  # Debugowanie typu
+            else:
+                stock_prices[stock_symbol] = None
+                print(f"Pusty DataFrame dla {stock_symbol}")
         except Exception as e:
-            print(f"An error occurred while fetching data for {stock_symbol}: {str(e)}")
+            print(f"Błąd podczas pobierania danych dla {stock_symbol}: {str(e)}")
             stock_prices[stock_symbol] = None
 
+    # Konstrukcja weighted_stock_data
     weighted_stock_data = {}
     for i, stock_symbol in enumerate(selected_stocks):
-        if stock_prices[stock_symbol] is not None:
-            weighted_stock_data[stock_symbol] = stock_prices[stock_symbol] * quantities[i]
+        if stock_prices[stock_symbol] is not None and not stock_prices[stock_symbol].empty:
+            try:
+                quantity = float(quantities[i])
+                # Upewnij się, że wynik jest Series
+                if isinstance(stock_prices[stock_symbol], pd.Series):
+                    weighted_stock_data[stock_symbol] = stock_prices[stock_symbol] * quantity
+                else:
+                    # Jeśli stock_prices[stock_symbol] jest DataFrame, weź pierwszą kolumnę jako Series
+                    weighted_stock_data[stock_symbol] = stock_prices[stock_symbol].iloc[:, 0] * quantity
+                print(f"weighted_stock_data[{stock_symbol}]: {weighted_stock_data[stock_symbol]}")  # Debugowanie
+                print(f"Type of weighted_stock_data[{stock_symbol}]: {type(weighted_stock_data[stock_symbol])}")  # Debugowanie typu
+            except (ValueError, TypeError) as e:
+                print(f"Błąd przy mnożeniu dla {stock_symbol}: {str(e)}")
+                weighted_stock_data[stock_symbol] = None
 
-    portfolio_value = pd.DataFrame(weighted_stock_data).sum(axis=1)
+    # Sprawdzenie, czy mamy jakiekolwiek dane
+    if not weighted_stock_data:
+        return jsonify({'error': 'Brak prawidłowych danych dla wybranych akcji'})
 
-    portfolio_value_initial = portfolio_value.iloc[0]
+    # Debugowanie zawartości weighted_stock_data
+    print(f"weighted_stock_data keys: {list(weighted_stock_data.keys())}")
+    for key, value in weighted_stock_data.items():
+        print(f"weighted_stock_data[{key}] type: {type(value)}, is_series: {isinstance(value, pd.Series)}, is_dataframe: {isinstance(value, pd.DataFrame)}")
+
+    # Tworzenie DataFrame
+    try:
+        valid_data = []
+        valid_keys = []
+        for key, value in weighted_stock_data.items():
+            if value is not None:
+                if isinstance(value, pd.Series):
+                    valid_data.append(value)
+                    valid_keys.append(key)
+                elif isinstance(value, pd.DataFrame) and not value.empty:
+                    # Jeśli DataFrame, weź pierwszą kolumnę jako Series
+                    valid_data.append(value.iloc[:, 0])
+                    valid_keys.append(key)
+        print(f"valid_data: {len(valid_data)} elements")  # Debugowanie
+        if not valid_data:
+            return jsonify({'error': 'Brak prawidłowych danych do utworzenia DataFrame (pusta lista valid_data)'})
+        portfolio_value = pd.concat(valid_data, axis=1, keys=valid_keys)
+        portfolio_value.columns = valid_keys
+        print(f"portfolio_value: {portfolio_value}")  # Debugowanie
+    except Exception as e:
+        print(f"Błąd przy tworzeniu DataFrame: {str(e)}")
+        return jsonify({'error': f'Błąd podczas tworzenia DataFrame: {str(e)}'})
+
+    # Sprawdzenie, czy DataFrame jest pusty lub zawiera tylko NaN
+    if portfolio_value.empty or portfolio_value.isnull().all().all():
+        return jsonify({'error': 'Brak prawidłowych danych dla wybranych akcji'})
+
+    portfolio_value_sum = portfolio_value.sum(axis=1)
+    print(f"portfolio_value_sum: {portfolio_value_sum}")  # Debugowanie
+
+    portfolio_value_initial = portfolio_value_sum.iloc[0]
+    print(f"portfolio_value_initial: {portfolio_value_initial}, type: {type(portfolio_value_initial)}")  # Debugowanie
     if portfolio_value_initial != 0:
-        portfolio_return = (portfolio_value.iloc[-1] - portfolio_value_initial) / portfolio_value_initial * 100
+        portfolio_return = (portfolio_value_sum.iloc[-1] - portfolio_value_initial) / portfolio_value_initial * 100
     else:
         portfolio_return = 0
 
-    portfolio_return = f"{portfolio_return:.2f}%"    
+    portfolio_return = f"{portfolio_return:.2f}%"
+    print(f"portfolio_return: {portfolio_return}")  # Debugowanie
 
     fig = go.Figure()
-    fig.add_trace(go.Scatter(x=portfolio_value.index, y=portfolio_value, mode='lines', name='Portfolio Value'))
-    fig.update_layout(title='Portfolio Performance', xaxis_title='Date', yaxis_title='Portfolio Value (USD)')
+    fig.add_trace(go.Scatter(x=portfolio_value_sum.index, y=portfolio_value_sum, mode='lines', name='Wartość portfela'))
+    fig.update_layout(title='Wyniki portfela', xaxis_title='Data', yaxis_title='Wartość portfela (USD)')
     performance_chart = fig.to_html(full_html=False)
 
     initial_values = []
     final_values = []
     percentage_changes = []
     for i, stock_symbol in enumerate(selected_stocks):
-        initial_value = stock_prices[stock_symbol].iloc[0] * quantities[i] if stock_prices[stock_symbol] is not None else 0
-        final_value = stock_prices[stock_symbol].iloc[-1] * quantities[i] if stock_prices[stock_symbol] is not None else 0
+        if stock_prices[stock_symbol] is not None and not stock_prices[stock_symbol].empty:
+            # Użyj skalarnej wartości z DataFrame lub Series
+            if isinstance(stock_prices[stock_symbol], pd.Series):
+                initial_value = stock_prices[stock_symbol].iloc[0] * float(quantities[i])
+                final_value = stock_prices[stock_symbol].iloc[-1] * float(quantities[i])
+            else:
+                initial_value = stock_prices[stock_symbol].iloc[0, 0] * float(quantities[i])
+                final_value = stock_prices[stock_symbol].iloc[-1, 0] * float(quantities[i])
+        else:
+            initial_value = 0
+            final_value = 0
         initial_values.append(initial_value)
         final_values.append(final_value)
+        print(f"initial_value for {stock_symbol}: {initial_value}, type: {type(initial_value)}")  # Debugowanie
+        print(f"final_value for {stock_symbol}: {final_value}, type: {type(final_value)}")  # Debugowanie
         if initial_value != 0:
             percentage_change = ((final_value - initial_value) / initial_value) * 100
         else:
@@ -259,35 +438,33 @@ def get_performance_data():
         percentage_changes.append(f"{sign}{percentage_change:.2f}%")
 
     bar_fig = go.Figure()
-    bar_fig.add_trace(go.Bar(x=selected_stocks, y=initial_values, name='Initial Value'))
-    bar_fig.add_trace(go.Bar(x=selected_stocks, y=final_values, name='Final Value', text=percentage_changes, textposition='auto'))
-    bar_fig.update_layout(title='Initial and Final Values with Percentage Change', xaxis_title='Stocks', yaxis_title='Value (USD)')
+    bar_fig.add_trace(go.Bar(x=selected_stocks, y=initial_values, name='Wartość początkowa'))
+    bar_fig.add_trace(go.Bar(x=selected_stocks, y=final_values, name='Wartość końcowa', text=percentage_changes, textposition='auto'))
+    bar_fig.update_layout(title='Wartości początkowe i końcowe z procentową zmianą', xaxis_title='Akcje', yaxis_title='Wartość (USD)')
     bar_chart = bar_fig.to_html(full_html=False)
 
     colors = px.colors.qualitative.Plotly
-
     while len(colors) < len(selected_stocks):
         colors = colors + colors
-
     colors = colors[:len(selected_stocks)]
 
-    pie_fig_initial = go.Figure(data=[go.Pie(labels=selected_stocks, values=initial_values, name='Initial Portfolio Distribution', marker=dict(colors=colors))])
-    pie_fig_initial.update_layout(title='Initial Portfolio Distribution')
+    pie_fig_initial = go.Figure(data=[go.Pie(labels=selected_stocks, values=initial_values, name='Początkowy rozkład portfela', marker=dict(colors=colors))])
+    pie_fig_initial.update_layout(title='Początkowy rozkład portfela')
     pie_chart_initial = pie_fig_initial.to_html(full_html=False)
 
-    pie_fig_final = go.Figure(data=[go.Pie(labels=selected_stocks, values=final_values, name='Final Portfolio Distribution', marker=dict(colors=colors))])
-    pie_fig_final.update_layout(title='Final Portfolio Distribution')
+    pie_fig_final = go.Figure(data=[go.Pie(labels=selected_stocks, values=final_values, name='Końcowy rozkład portfela', marker=dict(colors=colors))])
+    pie_fig_final.update_layout(title='Końcowy rozkład portfela')
     pie_chart_final = pie_fig_final.to_html(full_html=False)
 
-
-    return jsonify({
+    response = {
         'portfolio_return': portfolio_return,
         'performance_chart': performance_chart,
         'bar_chart': bar_chart,
         'pie_chart_initial': pie_chart_initial,
         'pie_chart_final': pie_chart_final
-    })
-
+    }
+    print(f"Response JSON: {response}")  # Debugowanie
+    return jsonify(response)
 @app.route('/get_start_date_prices', methods=['POST'])
 def get_start_date_prices():
     data = request.json
@@ -298,25 +475,49 @@ def get_start_date_prices():
     stock_prices = {}
     for stock_symbol in selected_stocks:
         try:
-            stock_data = yf.download(tickers=stock_symbol, start=start_date, end=start_date + dt.timedelta(days=1))
+            stock_data = yf.download(
+                tickers=stock_symbol,
+                start=start_date,
+                end=start_date + dt.timedelta(days=1),
+                auto_adjust=True
+            )
+            print(f"Dane dla {stock_symbol} w get_start_date_prices: {stock_data}")  # Debugowanie
             if not stock_data.empty:
-                close_price = stock_data['Adj Close'].iloc[0]
-                stock_prices[stock_symbol] = close_price
+                if 'Adj Close' in stock_data.columns:
+                    close_price = stock_data['Adj Close'].iloc[0].item()  # Użycie .item() zamiast float()
+                    stock_prices[stock_symbol] = close_price
+                elif 'Close' in stock_data.columns:
+                    close_price = stock_data['Close'].iloc[0].item()  # Użycie .item() zamiast float()
+                    stock_prices[stock_symbol] = close_price
+                    print(f"Użyto kolumny 'Close' dla {stock_symbol} w get_start_date_prices")
+                else:
+                    stock_prices[stock_symbol] = None
+                    print(f"Brak kolumn 'Adj Close' lub 'Close' dla {stock_symbol} w get_start_date_prices")
             else:
                 stock_prices[stock_symbol] = None
+                print(f"Pusty DataFrame dla {stock_symbol} w get_start_date_prices")
         except Exception as e:
-            print(f"An error occurred while fetching data for {stock_symbol} on {start_date}: {str(e)}")
+            print(f"Błąd podczas pobierania danych dla {stock_symbol} na {start_date}: {str(e)}")
             stock_prices[stock_symbol] = None
 
     return jsonify(stock_prices)
-
 def get_stock_data(tickers, start_date, end_date):
-    data = yf.download(tickers, start=start_date, end=end_date)['Adj Close']
-    return data
+    data = yf.download(tickers, start=start_date, end=end_date)
+    if 'Adj Close' in data:
+        return data['Adj Close']
+    elif 'Close' in data:
+        return data['Close']
+    else:
+        return pd.DataFrame()
 
 def get_stock_data2(tickers, start_date2, end_date2):
-    data2 = yf.download(tickers, start=start_date2, end=end_date2)['Adj Close']
-    return data2
+    data = yf.download(tickers, start=start_date2, end=end_date2)
+    if 'Adj Close' in data:
+        return data['Adj Close']
+    elif 'Close' in data:
+        return data['Close']
+    else:
+        return pd.DataFrame()
 
 def calculate_returns(weights, data):
     returns = np.dot(data.pct_change().mean(), weights) * 252

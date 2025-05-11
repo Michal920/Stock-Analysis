@@ -220,53 +220,54 @@
 
 
     $('#showPerformanceBtn').click(function () {
-        var selected_stocks = [];
-        var share_values = [];
-        var quantities = [];
+    var selected_stocks = [];
+    var share_values = [];
+    var quantities = [];
 
-        $('#selectedStocksTable tbody tr').each(function () {
-            var stockSymbol = $(this).find('td:first').text();
-            var share = parseFloat($(this).find('.shareInput').val());
-            var quantity = parseInt($(this).find('.quantityInput').val());
+    $('#selectedStocksTable tbody tr').each(function () {
+        var stockSymbol = $(this).find('td:first').text();
+        var share = parseFloat($(this).find('.shareInput').val());
+        var quantity = parseInt($(this).find('.quantityInput').val());
 
-            selected_stocks.push(stockSymbol);
-            share_values.push(share);
-            quantities.push(quantity);
-        });
-
-        var startDate = $('#startDate').val();
-        var endDate = $('#endDate').val();
-
-        if (!startDate || !endDate || selected_stocks.length === 0) {
-            alert('Please select start and end dates and at least one stock');
-            return;
-        }
-
-        $.ajax({
-            url: '/get_performance_data',
-            type: 'POST',
-            contentType: 'application/json',
-            data: JSON.stringify({
-                selected_stocks: selected_stocks,
-                start_date: startDate,
-                end_date: endDate,
-                share_values: share_values,
-                quantities: quantities
-            }),
-            success: function (response) {
-                var portfolioReturn = $('<div>').html('<strong>Portfolio Return:</strong> ' + response.portfolio_return);
-                var performanceChart = $('<div>').html(response.performance_chart);
-                $('#portfolioResults').empty().append(portfolioReturn, performanceChart);
-                $('#barChart').html(response.bar_chart);
-                $('#pieChartInitial').html(response.pie_chart_initial);
-                $('#pieChartFinal').html(response.pie_chart_final);
-                $('#generateReportBtnContainer').show();
-            },
-            error: function (xhr, status, error) {
-                console.error(xhr.responseText);
-            }
-        });
+        selected_stocks.push(stockSymbol);
+        share_values.push(share);
+        quantities.push(quantity);
     });
+
+    var startDate = $('#startDate').val();
+    var endDate = $('#endDate').val();
+
+    if (!startDate || !endDate || selected_stocks.length === 0) {
+        alert('Please select start and end dates and at least one stock');
+        return;
+    }
+
+    $.ajax({
+        url: '/get_performance_data',
+        type: 'POST',
+        contentType: 'application/json',
+        data: JSON.stringify({
+            selected_stocks: selected_stocks,
+            start_date: startDate,
+            end_date: endDate,
+            share_values: share_values,
+            quantities: quantities
+        }),
+        success: function (response) {
+            console.log('Response from /get_performance_data:', response); // Debugowanie
+            var portfolioReturn = $('<div>').html('<strong>Portfolio Return:</strong> ' + (response.portfolio_return || 'undefined'));
+            var performanceChart = $('<div>').html(response.performance_chart);
+            $('#portfolioResults').empty().append(portfolioReturn, performanceChart);
+            $('#barChart').html(response.bar_chart);
+            $('#pieChartInitial').html(response.pie_chart_initial);
+            $('#pieChartFinal').html(response.pie_chart_final);
+            $('#generateReportBtnContainer').show();
+        },
+        error: function (xhr, status, error) {
+            console.error('Error from /get_performance_data:', xhr.responseText);
+        }
+    });
+});
 
     $('#generateReportBtn').click(function () {
     var selected_stocks = [];
